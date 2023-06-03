@@ -1,95 +1,181 @@
-const config = {
-  buttonChangeTimeout: 2000,
+(function() {
+  const config = {
+    buttonChangeTimeout: 2000,
 
-  filteredListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Filtered.txt',
-  highlightedListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Highlighted.txt',
+    filteredListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Filtered.txt',
+    highlightedListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Highlighted.txt',
 
-  filteredCodeId: 'filtered-items-code-block',
-  filteredCopyId: 'filtered-items-copy-button',
-  filteredResetId: 'filtered-items-reset-button',
-  highlightedCodeId: 'highlighted-items-code-block',
-  highlightedCopyId: 'highlighted-items-copy-button',
-  highlightedResetId: 'highlighted-items-reset-button',
+    filteredCardId: 'filtered-card',
+    highlightedCardId: 'highlighted-card',
 
-  cache: {},
-};
+    selectors: {
+      copyButton: '.copy-button',
+      resetButton: '.reset-button',
+      saveButton: '.save-button',
+      saveWarning: '.save-warning',
+      textArea: '.item-list-textarea',
+    },
+  };
 
-function setTempButtonStyle(evt, message, fromClassName, toClassName) {
-  const button = evt.target;
-  const origMessage = button.innerText;
+  const downloadCache = {};
 
-  button.innerText = message;
-  button.classList.remove(fromClassName);
-  button.classList.add(toClassName);
-  button.setAttribute('disabled', 'disabled');
-
-  setTimeout(() => {
-    button.innerText = origMessage;
-    button.classList.remove(toClassName);
-    button.removeAttribute('disabled');
-    button.classList.add(fromClassName);
-  }, config.buttonChangeTimeout)
-}
-
-function getCopyButtonOnClick(textAreaId) {
-  return (evt) => {
-    const textarea = document.getElementById(textAreaId);
-    const contents = textarea.value
-      .replaceAll('\r', '')
-      .replaceAll('\n', '')
-      .replaceAll('  ', '');
-
-    navigator.clipboard.writeText(contents).then(
-      () => setTempButtonStyle(evt, 'Copied!', 'btn-primary', 'btn-success'),
-      () => setTempButtonStyle(evt, 'Copy failed!', 'btn-primary', 'btn-danger')
-    );
+  function getCardElement(cardId, selector) {
+    return document.getElementById(cardId).querySelector(selector);
   }
-}
 
-function getResetButtonOnClick(textAreaId) {
-  return (evt) => {
-    const textarea = document.getElementById(textAreaId);
-    textarea.value = config.cache[textAreaId];
-
-    setTempButtonStyle(evt, 'Reset!', 'btn-secondary', 'btn-success');
+  function setEnabled(elem, flag) {
+    if (flag) {
+      elem.removeAttribute('disabled');
+    } else {
+      elem.setAttribute('disabled', 'disabled');
+    }
   }
-}
 
-function downloadLists() {
-  fetch(config.filteredListUrl)
-    .then((res) => res.text())
-    .then((text) => {
-      config.cache[config.filteredCodeId] = text;
+  function setVisible(elem, flag) {
+    if (flag) {
+      elem.style.visibility = 'visible';
+    } else {
+      elem.style.visibility = 'hidden';
+    }
+  }
 
-      const textarea = document.getElementById(config.filteredCodeId);
-      textarea.value = text;
-    });
+  function setTempButtonStyle(button, message, fromClassName, toClassName, enabledAfterFlag) {
+    const origMessage = button.innerText;
 
-  fetch(config.highlightedListUrl)
-    .then((res) => res.text())
-    .then((text) => {
-      config.cache[config.highlightedCodeId] = text;
+    button.innerText = message;
+    button.classList.remove(fromClassName);
+    button.classList.add(toClassName);
+    setEnabled(button, false);
 
-      const textarea = document.getElementById(config.highlightedCodeId);
-      textarea.value = text;
-    });
-}
+    setTimeout(() => {
+      button.innerText = origMessage;
+      button.classList.remove(toClassName);
+      button.classList.add(fromClassName);
+      setEnabled(button, enabledAfterFlag);
+    }, config.buttonChangeTimeout)
+  }
 
-function setupEvents() {
-  const filteredItemsCopyButton = document.getElementById(config.filteredCopyId);
-  filteredItemsCopyButton.onclick = getCopyButtonOnClick(config.filteredCodeId);
+  function getCopyButtonOnClick(cardId) {
+    return (evt) => {
+      const textArea = getCardElement(cardId, config.selectors.textArea);
+      const contents = textArea.value
+        .replaceAll('\r', '')
+        .replaceAll('\n', '')
+        .replaceAll('  ', '');
 
-  const filteredItemsResetButton = document.getElementById(config.filteredResetId);
-  filteredItemsResetButton.onclick = getResetButtonOnClick(config.filteredCodeId);
+      navigator.clipboard.writeText(contents).then(
+        () => setTempButtonStyle(evt.target, 'Copied!', 'btn-primary', 'btn-success', true),
+        () => setTempButtonStyle(evt.target, 'Copy failed!', 'btn-primary', 'btn-danger', true)
+      );
+    }
+  }
 
-  const highlightedItemsCopyButton = document.getElementById(config.highlightedCopyId);
-  highlightedItemsCopyButton.onclick = getCopyButtonOnClick(config.highlightedCodeId);
+  function getResetButtonOnClick(cardId) {
+    return (evt) => {
+      const textArea = getCardElement(cardId, config.selectors.textArea);
+      const saveButton = getCardElement(cardId, config.selectors.saveButton);
+      const saveWarning = getCardElement(cardId, config.selectors.saveWarning);
 
-  const highlightedItemsResetButton = document.getElementById(config.highlightedResetId);
-  highlightedItemsResetButton.onclick = getResetButtonOnClick(config.highlightedCodeId);
-}
+      textArea.value = downloadCache[cardId];
 
-function init() {
-  downloadLists();
-  setupEvents();
-}
+      setEnabled(saveButton, true);
+      setVisible(saveWarning, true);
+      setTempButtonStyle(evt.target, 'Reset!', 'btn-secondary', 'btn-success', false);
+    }
+  }
+
+  function getSaveButtonOnClick(cardId) {
+    return (evt) => {
+      const textArea = getCardElement(cardId, config.selectors.textArea);
+      const resetButton = getCardElement(cardId, config.selectors.resetButton);
+      const saveWarning = getCardElement(cardId, config.selectors.saveWarning);
+
+      const matchesDownloadFile = textArea.value === downloadCache[cardId];
+
+      try {
+        if (matchesDownloadFile) {
+          localStorage.removeItem(cardId);
+        } else {
+          localStorage.setItem(cardId, textArea.value);
+        }
+      } catch (err) {
+        console.error(err);
+        setTempButtonStyle(evt.target, 'Save failed!', 'btn-primary', 'btn-danger', true);
+        return;
+      }
+
+      setVisible(saveWarning, false);
+      setEnabled(resetButton, !matchesDownloadFile);
+      setTempButtonStyle(evt.target, 'Saved!', 'btn-primary', 'btn-success', false);
+    }
+  }
+
+  function getTextAreaOnInput(cardId) {
+    return (evt) => {
+      const saveButton = getCardElement(cardId, config.selectors.saveButton);
+      const saveWarning = getCardElement(cardId, config.selectors.saveWarning);
+
+      setEnabled(saveButton, true);
+      setVisible(saveWarning, true);
+    }
+  }
+
+  function downloadLists() {
+    const initializeList = (cardId, downloadedList) => {
+      downloadCache[cardId] = downloadedList;
+
+      const textArea = getCardElement(cardId, config.selectors.textArea);
+      const resetButton = getCardElement(cardId, config.selectors.resetButton);
+      const savedList = localStorage.getItem(cardId);
+
+      if (savedList) {
+        console.log(`Loaded '${cardId}' from localStorage`);
+        textArea.value = savedList;
+        setEnabled(resetButton, true);
+      } else {
+        console.log(`Loaded '${cardId}' from downloaded file`);
+        textArea.value = downloadedList;
+        setEnabled(resetButton, false);
+      }
+    }
+
+    fetch(config.filteredListUrl)
+      .then((res) => res.text())
+      .then((dl) => initializeList(config.filteredCardId, dl));
+
+    fetch(config.highlightedListUrl)
+      .then((res) => res.text())
+      .then((dl) => initializeList(config.highlightedCardId, dl));
+  }
+
+  function setupEvents() {
+    const setup = (cardId) => {
+      const copyButton = getCardElement(cardId, config.selectors.copyButton);
+      copyButton.onclick = getCopyButtonOnClick(cardId);
+
+      const resetButton = getCardElement(cardId, config.selectors.resetButton);
+      resetButton.onclick = getResetButtonOnClick(cardId);
+      setEnabled(resetButton, false);
+
+      const saveButton = getCardElement(cardId, config.selectors.saveButton);
+      saveButton.onclick = getSaveButtonOnClick(cardId);
+      setEnabled(saveButton, false);
+
+      const textArea = getCardElement(cardId, config.selectors.textArea);
+      textArea.oninput = getTextAreaOnInput(cardId);
+
+      const saveWarning = getCardElement(cardId, config.selectors.saveWarning);
+      setVisible(saveWarning, false);
+    };
+
+    setup(config.filteredCardId);
+    setup(config.highlightedCardId);
+  }
+
+  function init() {
+    setupEvents();
+    downloadLists();
+  }
+
+  init();
+})();

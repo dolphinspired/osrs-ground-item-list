@@ -1,8 +1,14 @@
 .item-list-textarea {
+  background-color: whitesmoke;
   font-family: 'Courier New', Courier, monospace;
   line-height: 1;
   width: 100%;
   height: 263px;
+}
+
+.save-warning {
+  color: goldenrod;
+  font-style: italic;
 }
 
 .filtered {

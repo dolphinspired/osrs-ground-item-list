@@ -1,6 +1,5 @@
 const config = {
   buttonChangeTimeout: 2000,
-  busyClass: 'do-not-disturb',
 
   filteredListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Filtered.txt',
   highlightedListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Highlighted.txt',
@@ -22,20 +21,18 @@ function setTempButtonStyle(evt, message, fromClassName, toClassName) {
   button.innerText = message;
   button.classList.remove(fromClassName);
   button.classList.add(toClassName);
-  button.classList.add(config.busyClass);
+  button.setAttribute('disabled', 'disabled');
 
   setTimeout(() => {
     button.innerText = origMessage;
     button.classList.remove(toClassName);
-    button.classList.remove(config.busyClass);
+    button.removeAttribute('disabled');
     button.classList.add(fromClassName);
   }, config.buttonChangeTimeout)
 }
 
 function getCopyButtonOnClick(textAreaId) {
   return (evt) => {
-    if (evt.target.classList.contains(config.busyClass)) return;
-
     const textarea = document.getElementById(textAreaId);
     const contents = textarea.value
       .replaceAll('\r', '')
@@ -51,8 +48,6 @@ function getCopyButtonOnClick(textAreaId) {
 
 function getResetButtonOnClick(textAreaId) {
   return (evt) => {
-    if (evt.target.classList.contains(config.busyClass)) return;
-
     const textarea = document.getElementById(textAreaId);
     textarea.value = config.cache[textAreaId];
 

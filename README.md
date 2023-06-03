@@ -1,4 +1,4 @@
-# osrs-ground-item-list
+# osrs-ground-items-list
 
 A quick list of ground item filters and highlights for Old School RuneScape.
 

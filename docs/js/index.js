@@ -1,5 +1,17 @@
-const buttonChangeTimeout = 2000;
-const busyClass = 'do-not-disturb';
+const config = {
+  buttonChangeTimeout: 2000,
+  busyClass: 'do-not-disturb',
+
+  filteredListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Filtered.txt',
+  highlightedListUrl: 'https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Highlighted.txt',
+
+  filteredCodeId: 'filtered-items-code-block',
+  filteredCopyId: 'filtered-items-copy-button',
+  filteredResetId: 'filtered-items-reset-button',
+  highlightedCodeId: 'highlighted-items-code-block',
+  highlightedCopyId: 'highlighted-items-copy-button',
+  highlightedResetId: 'highlighted-items-reset-button',
+};
 
 function setTempButtonStyle(evt, message, fromClassName, toClassName) {
   const button = evt.target;
@@ -8,19 +20,19 @@ function setTempButtonStyle(evt, message, fromClassName, toClassName) {
   button.innerText = message;
   button.classList.remove(fromClassName);
   button.classList.add(toClassName);
-  button.classList.add(busyClass);
+  button.classList.add(config.busyClass);
 
   setTimeout(() => {
     button.innerText = origMessage;
     button.classList.remove(toClassName);
-    button.classList.remove(busyClass);
+    button.classList.remove(config.busyClass);
     button.classList.add(fromClassName);
-  }, buttonChangeTimeout)
+  }, config.buttonChangeTimeout)
 }
 
 function getCopyButtonOnClick(textAreaId) {
   return (evt) => {
-    if (evt.target.classList.contains(busyClass)) return;
+    if (evt.target.classList.contains(config.busyClass)) return;
 
     const textarea = document.getElementById(textAreaId);
     const contents = textarea.value
@@ -37,7 +49,7 @@ function getCopyButtonOnClick(textAreaId) {
 
 function getResetButtonOnClick(textAreaId) {
   return (evt) => {
-    if (evt.target.classList.contains(busyClass)) return;
+    if (evt.target.classList.contains(config.busyClass)) return;
 
     const textarea = document.getElementById(textAreaId);
     textarea.value = '';
@@ -47,33 +59,33 @@ function getResetButtonOnClick(textAreaId) {
 }
 
 function downloadLists() {
-  fetch('https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Filtered.txt')
+  fetch(config.filteredListUrl)
     .then((res) => res.text())
     .then((text) => {
-      const textarea = document.getElementById('filtered-items-code-block');
+      const textarea = document.getElementById(config.filteredCodeId);
       textarea.value = text;
     });
 
-  fetch('https://raw.githubusercontent.com/dolphinspired/osrs-ground-item-list/main/Highlighted.txt')
+  fetch(config.highlightedListUrl)
     .then((res) => res.text())
     .then((text) => {
-      const textarea = document.getElementById('highlighted-items-code-block');
+      const textarea = document.getElementById(config.highlightedCodeId);
       textarea.value = text;
     });
 }
 
 function setupEvents() {
-  const filteredItemsCopyButton = document.getElementById('filtered-items-copy-button');
-  filteredItemsCopyButton.onclick = getCopyButtonOnClick('filtered-items-code-block');
+  const filteredItemsCopyButton = document.getElementById(config.filteredCopyId);
+  filteredItemsCopyButton.onclick = getCopyButtonOnClick(config.filteredCodeId);
 
-  const filteredItemsResetButton = document.getElementById('filtered-items-reset-button');
-  filteredItemsResetButton.onclick = getResetButtonOnClick('filtered-items-code-block');
+  const filteredItemsResetButton = document.getElementById(config.filteredResetId);
+  filteredItemsResetButton.onclick = getResetButtonOnClick(config.filteredCodeId);
 
-  const highlightedItemsCopyButton = document.getElementById('highlighted-items-copy-button');
-  highlightedItemsCopyButton.onclick = getCopyButtonOnClick('highlighted-items-code-block');
+  const highlightedItemsCopyButton = document.getElementById(config.highlightedCopyId);
+  highlightedItemsCopyButton.onclick = getCopyButtonOnClick(config.highlightedCodeId);
 
-  const highlightedItemsResetButton = document.getElementById('highlighted-items-reset-button');
-  highlightedItemsResetButton.onclick = getResetButtonOnClick('highlighted-items-code-block');
+  const highlightedItemsResetButton = document.getElementById(config.highlightedResetId);
+  highlightedItemsResetButton.onclick = getResetButtonOnClick(config.highlightedCodeId);
 }
 
 function init() {

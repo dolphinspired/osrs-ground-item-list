@@ -1,22 +1,27 @@
 const buttonChangeTimeout = 2000;
+const busyClass = 'do-not-disturb';
 
-function setTempButtonStyle(evt, message, className) {
+function setTempButtonStyle(evt, message, fromClassName, toClassName) {
   const button = evt.target;
   const origMessage = button.innerText;
 
   button.innerText = message;
-  button.classList.remove('btn-primary');
-  button.classList.add(className);
+  button.classList.remove(fromClassName);
+  button.classList.add(toClassName);
+  button.classList.add(busyClass);
 
   setTimeout(() => {
     button.innerText = origMessage;
-    button.classList.remove(className);
-    button.classList.add('btn-primary');
+    button.classList.remove(toClassName);
+    button.classList.remove(busyClass);
+    button.classList.add(fromClassName);
   }, buttonChangeTimeout)
 }
 
 function getCopyButtonOnClick(textAreaId) {
   return (evt) => {
+    if (evt.target.classList.contains(busyClass)) return;
+
     const textarea = document.getElementById(textAreaId);
     const contents = textarea.value
       .replaceAll('\r', '')
@@ -24,9 +29,20 @@ function getCopyButtonOnClick(textAreaId) {
       .replaceAll('  ', '');
 
     navigator.clipboard.writeText(contents).then(
-      () => setTempButtonStyle(evt, 'Copied!', 'btn-success'),
-      () => setTempButtonStyle(evt, 'Copy failed!', 'btn-danger')
+      () => setTempButtonStyle(evt, 'Copied!', 'btn-primary', 'btn-success'),
+      () => setTempButtonStyle(evt, 'Copy failed!', 'btn-primary', 'btn-danger')
     );
+  }
+}
+
+function getResetButtonOnClick(textAreaId) {
+  return (evt) => {
+    if (evt.target.classList.contains(busyClass)) return;
+
+    const textarea = document.getElementById(textAreaId);
+    textarea.value = '';
+
+    setTempButtonStyle(evt, 'Reset!', 'btn-secondary', 'btn-success');
   }
 }
 
@@ -50,8 +66,14 @@ function setupEvents() {
   const filteredItemsCopyButton = document.getElementById('filtered-items-copy-button');
   filteredItemsCopyButton.onclick = getCopyButtonOnClick('filtered-items-code-block');
 
+  const filteredItemsResetButton = document.getElementById('filtered-items-reset-button');
+  filteredItemsResetButton.onclick = getResetButtonOnClick('filtered-items-code-block');
+
   const highlightedItemsCopyButton = document.getElementById('highlighted-items-copy-button');
   highlightedItemsCopyButton.onclick = getCopyButtonOnClick('highlighted-items-code-block');
+
+  const highlightedItemsResetButton = document.getElementById('highlighted-items-reset-button');
+  highlightedItemsResetButton.onclick = getResetButtonOnClick('highlighted-items-code-block');
 }
 
 function init() {

@@ -11,6 +11,8 @@ const config = {
   highlightedCodeId: 'highlighted-items-code-block',
   highlightedCopyId: 'highlighted-items-copy-button',
   highlightedResetId: 'highlighted-items-reset-button',
+
+  cache: {},
 };
 
 function setTempButtonStyle(evt, message, fromClassName, toClassName) {
@@ -52,7 +54,7 @@ function getResetButtonOnClick(textAreaId) {
     if (evt.target.classList.contains(config.busyClass)) return;
 
     const textarea = document.getElementById(textAreaId);
-    textarea.value = '';
+    textarea.value = config.cache[textAreaId];
 
     setTempButtonStyle(evt, 'Reset!', 'btn-secondary', 'btn-success');
   }
@@ -62,6 +64,8 @@ function downloadLists() {
   fetch(config.filteredListUrl)
     .then((res) => res.text())
     .then((text) => {
+      config.cache[config.filteredCodeId] = text;
+
       const textarea = document.getElementById(config.filteredCodeId);
       textarea.value = text;
     });
@@ -69,6 +73,8 @@ function downloadLists() {
   fetch(config.highlightedListUrl)
     .then((res) => res.text())
     .then((text) => {
+      config.cache[config.highlightedCodeId] = text;
+
       const textarea = document.getElementById(config.highlightedCodeId);
       textarea.value = text;
     });

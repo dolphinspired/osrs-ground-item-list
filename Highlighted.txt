@@ -2,6 +2,7 @@
 * half of key,
 Ancient shard,
 Bolt pouch,
+Brimstone key,
 Clue scroll*,
 Colossal pouch,
 Crystal key,
